@@ -19,6 +19,8 @@ import { useElevation } from "../hooks/useElevation";
 import ElevationProfile from "./ElevationProfile";
 import POILayer from "./POILayer";
 import RiskBadge from "./RiskBadge";
+import GPXImporter from "./GPXImporter";
+import ExportButton from "./ExportButton";
 
 export default function HikeEditor() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -243,6 +245,16 @@ export default function HikeEditor() {
           >
             Sauvegarder
           </button>
+        </div>
+        <div style={{ padding: "0 1rem 0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <GPXImporter />
+          {activeHike && (
+            <ExportButton
+              hike={activeHike}
+              elevationGainM={elevationStats?.elevationGain ?? 0}
+              distanceKm={distance / 1000}
+            />
+          )}
         </div>
 
         {hikes.length === 0 && (

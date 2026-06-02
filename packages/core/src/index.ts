@@ -131,3 +131,21 @@ export type { RiskLevel, RiskFactor, RiskAssessment } from "./risk";
 
 export { EMERGENCY_CONTACTS, formatGpsForSMS } from "./sos";
 export type { EmergencyContact } from "./sos";
+
+export { totalWeight, weightByCategory, weightStatus, WEIGHT_THRESHOLDS } from "./gear";
+export type { GearItem, GearCategory } from "./gear";
+
+export {
+  calculateTotalCalories,
+  calculateFoodWeightGrams,
+  DEFAULT_RATIONS,
+} from "./resupply";
+export type { ResupplyPoint, RationDay } from "./resupply";
+
+export { computeTrackStats, exportToGPX } from "./tracking";
+export type { TrackPoint, WaypointNote, ActiveTrack } from "./tracking";
+
+export { parseGPX, waypointsToGeoJSON } from "./gpx";
+export type { GPXWaypoint, GeoJSONLineString } from "./gpx";
+
+export { generateShareableLink, generateTextSummary } from "./export";

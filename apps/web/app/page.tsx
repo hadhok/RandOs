@@ -13,109 +13,93 @@ export default function HomePage() {
     <main
       style={{
         minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
+        backgroundColor: "#F9FAFB",
         padding: "2rem",
       }}
     >
       <header style={{ textAlign: "center", marginBottom: "3rem" }}>
-        <h1
-          style={{
-            fontSize: "3rem",
-            fontWeight: 800,
-            color: "#2D6A4F",
-            margin: 0,
-          }}
-        >
+        <h1 style={{ fontSize: "3rem", fontWeight: 800, color: "#2D6A4F", margin: 0 }}>
           RandOs
         </h1>
-        <p
-          style={{
-            fontSize: "1.25rem",
-            color: "#6B7280",
-            marginTop: "0.75rem",
-          }}
-        >
+        <p style={{ fontSize: "1.25rem", color: "#6B7280", marginTop: "0.75rem" }}>
           Planifiez, suivez et analysez vos randonnées
         </p>
       </header>
 
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: "1.5rem",
-          maxWidth: "900px",
-          width: "100%",
-        }}
-      >
-        <FeatureCard
-          icon="🗺️"
-          title="Carte"
-          href="/carte"
-          description="Explorez les cartes IGN détaillées et recherchez un lieu pour planifier votre sortie."
-        />
-        <FeatureCard
-          icon="🥾"
-          title="Préparer"
-          href="/preparer"
-          description="Tracez votre itinéraire, ajoutez des points d'intérêt et estimez la durée de votre randonnée."
-        />
-        <FeatureCard
-          icon="🌤️"
-          title="Météo"
-          href="/meteo"
-          description="Consultez les prévisions météo détaillées pour votre destination et évaluez le risque rando."
-        />
-        <FeatureCard
-          icon="✅"
-          title="Check-list"
-          href="/checklist"
-          description="Préparez votre équipement avec une liste personnalisée selon la saison, l'altitude et la durée."
-        />
-        <SOSCard onClick={() => setSosOpen(true)} />
+      {/* Main actions */}
+      <section style={{ maxWidth: 960, margin: "0 auto 2.5rem" }}>
+        <h2 style={{ fontSize: "0.875rem", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>
+          Actions principales
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem" }}>
+          <BigCard
+            icon="🥾"
+            title="Préparer"
+            href="/preparer"
+            description="Tracez votre itinéraire, ajoutez des points d'intérêt et estimez la durée."
+            color="#2D6A4F"
+          />
+          <BigCard
+            icon="📍"
+            title="En route"
+            href="/enroute"
+            description="Enregistrez votre position GPS en temps réel et suivez votre progression."
+            color="#3B82F6"
+          />
+          <BigCard
+            icon="📊"
+            title="Bilans"
+            href="/bilan"
+            description="Analysez vos sorties passées, exportez en GPX et comparez vos performances."
+            color="#8B5CF6"
+          />
+        </div>
       </section>
 
-      <div style={{ marginTop: "3rem", display: "flex", gap: "1rem" }}>
-        <a
-          href="https://apps.apple.com"
-          style={{
-            padding: "0.75rem 1.5rem",
-            backgroundColor: "#2D6A4F",
-            color: "#fff",
-            borderRadius: "8px",
-            textDecoration: "none",
-            fontWeight: 600,
-          }}
-        >
-          App Store
-        </a>
-        <a
-          href="https://play.google.com"
-          style={{
-            padding: "0.75rem 1.5rem",
-            backgroundColor: "#1F2937",
-            color: "#fff",
-            borderRadius: "8px",
-            textDecoration: "none",
-            fontWeight: 600,
-          }}
-        >
-          Google Play
-        </a>
-      </div>
+      {/* Secondary tools */}
+      <section style={{ maxWidth: 960, margin: "0 auto 2.5rem" }}>
+        <h2 style={{ fontSize: "0.875rem", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>
+          Outils
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "0.75rem" }}>
+          <SmallCard icon="🌤️" title="Météo" href="/meteo" />
+          <SmallCard icon="✅" title="Check-list" href="/checklist" />
+          <SmallCard icon="🎒" title="Poids du sac" href="/sac" />
+          <SmallCard icon="🍎" title="Ravitaillement" href="/ravitaillement" />
+          <SmallCard icon="📚" title="Bibliothèque" href="/bibliotheque" />
+          <SmallCard icon="🗺️" title="Carte" href="/carte" />
+        </div>
+      </section>
 
-      <footer
-        style={{
-          marginTop: "4rem",
-          fontSize: "0.875rem",
-          color: "#9CA3AF",
-        }}
-      >
-        &copy; {new Date().getFullYear()} RandOs. Fait avec passion pour les
-        randonneurs.
+      {/* SOS */}
+      <section style={{ maxWidth: 960, margin: "0 auto 2.5rem" }}>
+        <button
+          onClick={() => setSosOpen(true)}
+          style={{
+            width: "100%",
+            padding: "1rem 1.5rem",
+            backgroundColor: "#FEF2F2",
+            border: "1px solid #FECACA",
+            borderRadius: "10px",
+            cursor: "pointer",
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "1rem",
+          }}
+        >
+          <span style={{ fontSize: "2rem" }}>🆘</span>
+          <div>
+            <div style={{ fontWeight: 700, color: "#DC2626", fontSize: "1rem" }}>SOS Urgence</div>
+            <div style={{ fontSize: "0.875rem", color: "#6B7280" }}>
+              Numéros d'urgence montagne et partage de position GPS
+            </div>
+          </div>
+        </button>
+      </section>
+
+      <footer style={{ textAlign: "center", marginTop: "2rem", fontSize: "0.875rem", color: "#9CA3AF" }}>
+        &copy; {new Date().getFullYear()} RandOs. Fait avec passion pour les randonneurs.
       </footer>
 
       {sosOpen && <SOSButton />}
@@ -123,69 +107,59 @@ export default function HomePage() {
   );
 }
 
-function FeatureCard({
+function BigCard({
   icon,
   title,
   href,
   description,
+  color,
 }: {
   icon: string;
   title: string;
   href: string;
   description: string;
+  color: string;
 }) {
   return (
     <Link
       href={href}
       style={{
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "#fff",
         borderRadius: "12px",
         padding: "1.5rem",
         boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-        border: "1px solid #E5E7EB",
+        border: `1px solid ${color}30`,
         textDecoration: "none",
         color: "inherit",
         display: "block",
-        transition: "box-shadow 0.2s",
       }}
     >
-      <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>{icon}</div>
-      <h2 style={{ fontSize: "1.125rem", fontWeight: 700, margin: "0 0 0.5rem" }}>
-        {title}
-      </h2>
-      <p style={{ fontSize: "0.9rem", color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-        {description}
-      </p>
+      <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>{icon}</div>
+      <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: "0 0 0.5rem", color }}>{title}</h2>
+      <p style={{ fontSize: "0.9rem", color: "#6B7280", margin: 0, lineHeight: 1.6 }}>{description}</p>
     </Link>
   );
 }
 
-function SOSCard({ onClick }: { onClick: () => void }) {
+function SmallCard({ icon, title, href }: { icon: string; title: string; href: string }) {
   return (
-    <button
-      onClick={onClick}
+    <Link
+      href={href}
       style={{
-        backgroundColor: "#FEF2F2",
-        borderRadius: "12px",
-        padding: "1.5rem",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-        border: "1px solid #FECACA",
+        backgroundColor: "#fff",
+        borderRadius: "10px",
+        padding: "1rem",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+        border: "1px solid #E5E7EB",
         textDecoration: "none",
         color: "inherit",
-        display: "block",
-        cursor: "pointer",
-        textAlign: "left",
-        width: "100%",
-        transition: "box-shadow 0.2s",
+        display: "flex",
+        alignItems: "center",
+        gap: "0.75rem",
       }}
     >
-      <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>🆘</div>
-      <h2 style={{ fontSize: "1.125rem", fontWeight: 700, margin: "0 0 0.5rem", color: "#DC2626" }}>
-        SOS
-      </h2>
-      <p style={{ fontSize: "0.9rem", color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-        Numéros d'urgence montagne et partage de position GPS en cas de danger.
-      </p>
-    </button>
+      <span style={{ fontSize: "1.5rem" }}>{icon}</span>
+      <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>{title}</span>
+    </Link>
   );
 }
