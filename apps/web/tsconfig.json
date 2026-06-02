@@ -2,18 +2,41 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "module": "esnext",
     "moduleResolution": "bundler",
     "jsx": "preserve",
     "noEmit": true,
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
-      "@randos/core": ["../../packages/core/src/index.ts"],
-      "@randos/ui": ["../../packages/ui/src/index.ts"],
-      "@randos/db": ["../../packages/db/src/index.ts"]
-    }
+      "@randos/core": [
+        "../../packages/core/src/index.ts"
+      ],
+      "@randos/ui": [
+        "../../packages/ui/src/index.ts"
+      ],
+      "@randos/db": [
+        "../../packages/db/src/index.ts"
+      ]
+    },
+    "allowJs": true,
+    "incremental": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

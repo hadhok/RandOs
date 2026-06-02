@@ -1,8 +1,10 @@
 import HikeLibrary from "../../components/HikeLibrary";
+import { HikeStoreProvider } from "../../hooks/useHikeStore";
 
 export default function BibliothequeePage() {
   return (
-    <main style={{ minHeight: "100vh", backgroundColor: "#F9FAFB" }}>
+    <HikeStoreProvider>
+      <main style={{ minHeight: "100vh", backgroundColor: "#F9FAFB" }}>
       <div style={{ padding: "1.5rem", borderBottom: "1px solid #E5E7EB", backgroundColor: "#fff" }}>
         <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 800, color: "#2D6A4F" }}>
           Bibliothèque de randonnées
@@ -11,7 +13,8 @@ export default function BibliothequeePage() {
           Retrouvez et gérez toutes vos randonnées enregistrées
         </p>
       </div>
-      <HikeLibrary />
-    </main>
+        <HikeLibrary />
+      </main>
+    </HikeStoreProvider>
   );
 }
