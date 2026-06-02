@@ -12,6 +12,7 @@ import {
   calculateBoundingBox,
   assessHikeRisk,
   calculateStats,
+  parseGPX,
 } from "@randos/core";
 import type { BoundingBox } from "@randos/core";
 import { useHikeStore } from "../hooks/useHikeStore";
@@ -21,6 +22,43 @@ import POILayer from "./POILayer";
 import RiskBadge from "./RiskBadge";
 import GPXImporter from "./GPXImporter";
 import ExportButton from "./ExportButton";
+
+function GPXImporterOverlay() {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const { createHike, updateHike } = useHikeStore();
+  function handleFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const xml = e.target?.result as string;
+      try {
+        const { waypoints, name, totalDistanceKm } = parseGPX(xml);
+        const hike = createHike(name || file.name.replace(".gpx", ""));
+        updateHike(hike.id, { waypoints: waypoints.map((wp) => ({ lat: wp.lat, lng: wp.lng })) });
+        setFeedback(`✓ ${waypoints.length} points — ${totalDistanceKm.toFixed(1)} km`);
+      } catch {
+        setFeedback("Erreur de parsing GPX.");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  return (
+    <div>
+      <input ref={inputRef} type="file" accept=".gpx" style={{ display: "none" }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
+      />
+      <button onClick={() => { setFeedback(null); inputRef.current?.click(); }}
+        style={{
+          width: "100%", padding: "0.75rem 1.5rem", backgroundColor: "#2D6A4F", color: "#fff",
+          border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: 700, fontSize: "1rem",
+        }}>
+        Importer un fichier GPX
+      </button>
+      {feedback && <p style={{ fontSize: "0.8rem", color: "#2D6A4F", marginTop: "0.5rem", marginBottom: 0, fontWeight: 600 }}>{feedback}</p>}
+    </div>
+  );
+}
 
 export default function HikeEditor() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -191,6 +229,29 @@ export default function HikeEditor() {
       <div style={{ flex: 1, position: "relative" }}>
         <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
         {mapReady && <POILayer map={mapRef.current} bbox={bbox} />}
+        {(!activeHike || activeHike.waypoints.length === 0) && (
+          <div style={{
+            position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.25)", zIndex: 10, pointerEvents: "none",
+          }}>
+            <div style={{
+              background: "#fff", borderRadius: "16px", padding: "2rem 2.5rem", textAlign: "center",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.18)", pointerEvents: "auto", maxWidth: 320,
+            }}>
+              <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🗺️</div>
+              <div style={{ fontWeight: 700, fontSize: "1.1rem", color: "#111827", marginBottom: "0.5rem" }}>
+                Commencer un itinéraire
+              </div>
+              <div style={{ fontSize: "0.85rem", color: "#6B7280", marginBottom: "1.25rem" }}>
+                Importez un fichier GPX depuis votre appareil Garmin ou tout autre source.
+              </div>
+              <GPXImporterOverlay />
+              <div style={{ fontSize: "0.75rem", color: "#9CA3AF", marginTop: "1rem" }}>
+                Ou cliquez directement sur la carte pour ajouter des points manuellement.
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <aside
@@ -269,7 +330,7 @@ export default function HikeEditor() {
 
             <div>
               <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#6B7280", display: "block", marginBottom: "0.25rem" }}>
-                Nom de la rando
+                Nom
               </label>
               <input
                 value={activeHike.name}
@@ -320,7 +381,7 @@ export default function HikeEditor() {
                 Waypoints
               </div>
               {activeHike.waypoints.length === 0 && (
-                <p style={{ fontSize: "0.8rem", color: "#9CA3AF" }}>Cliquez sur la carte pour ajouter des points.</p>
+                <p style={{ fontSize: "0.8rem", color: "#9CA3AF" }}>Importez un fichier GPX ou cliquez sur la carte.</p>
               )}
               {activeHike.waypoints.map((wp, idx) => (
                 <div
