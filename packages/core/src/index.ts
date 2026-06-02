@@ -101,3 +101,11 @@ export interface HikeSummary {
   elevationGainMeters: number;
   durationSeconds: number;
 }
+
+export {
+  IGN_WMTS_URL,
+  calculateBoundingBox,
+  estimateTileCount,
+  estimateDownloadSizeMB,
+} from "./map";
+export type { BoundingBox } from "./map";
