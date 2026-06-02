@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import dynamic from "next/dynamic";
+
+const SOSButton = dynamic(() => import("../components/SOSButton"), { ssr: false });
 
 export const metadata: Metadata = {
   title: "RandOs – Planifiez vos randonnées",
@@ -41,6 +44,7 @@ export default function RootLayout({
         }}
       >
         {children}
+        <SOSButton />
       </body>
     </html>
   );

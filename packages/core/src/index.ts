@@ -116,3 +116,18 @@ export {
   estimateDownloadSizeMB,
 } from "./map";
 export type { BoundingBox } from "./map";
+
+export { interpolateElevation, calculateStats } from "./elevation";
+export type { ElevationPoint } from "./elevation";
+
+export { computeStages } from "./stages";
+export type { HikerLevel, Stage } from "./stages";
+
+export { POI_ICONS } from "./poi";
+export type { POIType, POI } from "./poi";
+
+export { assessHikeRisk } from "./risk";
+export type { RiskLevel, RiskFactor, RiskAssessment } from "./risk";
+
+export { EMERGENCY_CONTACTS, formatGpsForSMS } from "./sos";
+export type { EmergencyContact } from "./sos";

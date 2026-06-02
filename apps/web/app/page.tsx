@@ -1,6 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import dynamic from "next/dynamic";
+
+const SOSButton = dynamic(() => import("../components/SOSButton"), { ssr: false });
 
 export default function HomePage() {
+  const [sosOpen, setSosOpen] = useState(false);
+
   return (
     <main
       style={{
@@ -45,6 +53,12 @@ export default function HomePage() {
       >
         <FeatureCard
           icon="🗺️"
+          title="Carte"
+          href="/carte"
+          description="Explorez les cartes IGN détaillées et recherchez un lieu pour planifier votre sortie."
+        />
+        <FeatureCard
+          icon="🥾"
           title="Préparer"
           href="/preparer"
           description="Tracez votre itinéraire, ajoutez des points d'intérêt et estimez la durée de votre randonnée."
@@ -61,12 +75,7 @@ export default function HomePage() {
           href="/checklist"
           description="Préparez votre équipement avec une liste personnalisée selon la saison, l'altitude et la durée."
         />
-        <FeatureCard
-          icon="🧭"
-          title="Carte"
-          href="/carte"
-          description="Explorez les cartes IGN détaillées et recherchez un lieu pour planifier votre sortie."
-        />
+        <SOSCard onClick={() => setSosOpen(true)} />
       </section>
 
       <div style={{ marginTop: "3rem", display: "flex", gap: "1rem" }}>
@@ -108,6 +117,8 @@ export default function HomePage() {
         &copy; {new Date().getFullYear()} RandOs. Fait avec passion pour les
         randonneurs.
       </footer>
+
+      {sosOpen && <SOSButton />}
     </main>
   );
 }
@@ -146,5 +157,35 @@ function FeatureCard({
         {description}
       </p>
     </Link>
+  );
+}
+
+function SOSCard({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        backgroundColor: "#FEF2F2",
+        borderRadius: "12px",
+        padding: "1.5rem",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+        border: "1px solid #FECACA",
+        textDecoration: "none",
+        color: "inherit",
+        display: "block",
+        cursor: "pointer",
+        textAlign: "left",
+        width: "100%",
+        transition: "box-shadow 0.2s",
+      }}
+    >
+      <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>🆘</div>
+      <h2 style={{ fontSize: "1.125rem", fontWeight: 700, margin: "0 0 0.5rem", color: "#DC2626" }}>
+        SOS
+      </h2>
+      <p style={{ fontSize: "0.9rem", color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+        Numéros d'urgence montagne et partage de position GPS en cas de danger.
+      </p>
+    </button>
   );
 }

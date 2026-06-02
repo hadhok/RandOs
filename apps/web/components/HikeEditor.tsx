@@ -1,19 +1,59 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { MapMouseEvent } from "maplibre-gl";
-import { IGN_WMTS_URL, CARTO_TILE_URL, calculatePathDistance, formatDistance } from "@randos/core";
+import {
+  IGN_WMTS_URL,
+  CARTO_TILE_URL,
+  calculatePathDistance,
+  formatDistance,
+  calculateBoundingBox,
+  assessHikeRisk,
+  calculateStats,
+} from "@randos/core";
+import type { BoundingBox } from "@randos/core";
 import { useHikeStore } from "../hooks/useHikeStore";
+import { useElevation } from "../hooks/useElevation";
+import ElevationProfile from "./ElevationProfile";
+import POILayer from "./POILayer";
+import RiskBadge from "./RiskBadge";
 
 export default function HikeEditor() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const ignFailedRef = useRef(false);
+  const [mapReady, setMapReady] = useState(false);
 
   const { hikes, activeHike, createHike, updateHike, deleteHike, setActiveHike } = useHikeStore();
+
+  const waypoints = activeHike?.waypoints ?? [];
+  const { data: elevationData } = useElevation(waypoints);
+
+  const elevationStats = elevationData ? calculateStats(elevationData) : null;
+
+  const bbox: BoundingBox | null =
+    waypoints.length >= 2
+      ? calculateBoundingBox(
+          waypoints.map((wp) => ({ lat: wp.lat, lon: wp.lng })),
+          1,
+        )
+      : null;
+
+  const riskAssessment =
+    activeHike && elevationStats
+      ? assessHikeRisk({
+          durationDays: 1,
+          maxAltitude: elevationStats.maxElevation,
+          totalDistanceKm:
+            calculatePathDistance(waypoints.map((wp) => ({ lat: wp.lat, lon: wp.lng }))) / 1000,
+          elevationGainM: elevationStats.elevationGain,
+          season: "ete",
+          level: "intermediaire",
+        })
+      : null;
 
   useEffect(() => {
     const el = containerRef.current;
@@ -68,6 +108,7 @@ export default function HikeEditor() {
         source: "route",
         paint: { "line-color": "#2D6A4F", "line-width": 3 },
       });
+      setMapReady(true);
     });
 
     map.on("click", (e: MapMouseEvent) => {
@@ -99,7 +140,7 @@ export default function HikeEditor() {
       }
     });
 
-    return () => map.remove();
+    return () => { map.remove(); setMapReady(false); };
   }, []);
 
   useEffect(() => {
@@ -110,10 +151,10 @@ export default function HikeEditor() {
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
-    const waypoints = activeHike?.waypoints ?? [];
-    (map as maplibregl.Map & { _waypoints?: Array<{ lat: number; lng: number }> })._waypoints = waypoints;
+    const wps = activeHike?.waypoints ?? [];
+    (map as maplibregl.Map & { _waypoints?: Array<{ lat: number; lng: number }> })._waypoints = wps;
 
-    waypoints.forEach((wp) => {
+    wps.forEach((wp) => {
       const marker = new maplibregl.Marker({ color: "#3B82F6" })
         .setLngLat([wp.lng, wp.lat])
         .addTo(map);
@@ -123,12 +164,12 @@ export default function HikeEditor() {
     if (map.isStyleLoaded()) {
       const source = map.getSource("route") as maplibregl.GeoJSONSource | undefined;
       if (source) {
-        if (waypoints.length >= 2) {
+        if (wps.length >= 2) {
           source.setData({
             type: "Feature",
             geometry: {
               type: "LineString",
-              coordinates: waypoints.map((wp) => [wp.lng, wp.lat]),
+              coordinates: wps.map((wp) => [wp.lng, wp.lat]),
             },
             properties: {},
           });
@@ -147,6 +188,7 @@ export default function HikeEditor() {
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       <div style={{ flex: 1, position: "relative" }}>
         <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
+        {mapReady && <POILayer map={mapRef.current} bbox={bbox} />}
       </div>
 
       <aside
@@ -211,6 +253,8 @@ export default function HikeEditor() {
 
         {activeHike && (
           <div style={{ flex: 1, overflow: "auto", padding: "1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+            {riskAssessment && <RiskBadge assessment={riskAssessment} />}
+
             <div>
               <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#6B7280", display: "block", marginBottom: "0.25rem" }}>
                 Nom de la rando
@@ -245,13 +289,19 @@ export default function HikeEditor() {
               </div>
               <div>
                 <div style={{ fontSize: "0.75rem", color: "#6B7280" }}>D+</div>
-                <div style={{ fontWeight: 700, color: "#2D6A4F" }}>0 m</div>
+                <div style={{ fontWeight: 700, color: "#2D6A4F" }}>
+                  {elevationStats ? `${Math.round(elevationStats.elevationGain)} m` : "0 m"}
+                </div>
               </div>
               <div>
                 <div style={{ fontSize: "0.75rem", color: "#6B7280" }}>Points</div>
                 <div style={{ fontWeight: 700, color: "#2D6A4F" }}>{activeHike.waypoints.length}</div>
               </div>
             </div>
+
+            {elevationData && elevationStats && waypoints.length >= 2 && (
+              <ElevationProfile points={elevationData} stats={elevationStats} />
+            )}
 
             <div>
               <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#6B7280", marginBottom: "0.5rem" }}>
