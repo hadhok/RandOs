@@ -32,6 +32,8 @@ export default function RootLayout({
       <body
         style={{
           margin: 0,
+          padding: 0,
+          height: "100vh",
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           backgroundColor: "#F9FAFB",

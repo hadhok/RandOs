@@ -9,10 +9,11 @@ export default function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const el = containerRef.current;
+    if (!el) return;
 
     const map = new maplibregl.Map({
-      container: containerRef.current,
+      container: el,
       style: {
         version: 8,
         sources: {
@@ -37,10 +38,13 @@ export default function MapView() {
 
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
-    return () => {
-      map.remove();
-    };
+    return () => map.remove();
   }, []);
 
-  return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
+  return (
+    <div
+      ref={containerRef}
+      style={{ position: "absolute", inset: 0 }}
+    />
+  );
 }
