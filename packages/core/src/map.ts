@@ -3,6 +3,9 @@ import type { GpsPoint } from "./index";
 export const IGN_WMTS_URL =
   "https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}";
 
+export const CARTO_TILE_URL =
+  "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png";
+
 export interface BoundingBox {
   north: number;
   south: number;

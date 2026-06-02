@@ -102,8 +102,15 @@ export interface HikeSummary {
   durationSeconds: number;
 }
 
+export { generateChecklist } from "./checklist";
+export type { ChecklistItem, ChecklistCategory, ChecklistContext } from "./checklist";
+
+export { assessRisk, weatherCodeToIcon, weatherCodeToDescription } from "./meteo";
+export type { WeatherPoint, WeatherForecast, WeatherIcon } from "./meteo";
+
 export {
   IGN_WMTS_URL,
+  CARTO_TILE_URL,
   calculateBoundingBox,
   estimateTileCount,
   estimateDownloadSizeMB,

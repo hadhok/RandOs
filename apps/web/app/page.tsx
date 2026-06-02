@@ -39,24 +39,33 @@ export default function HomePage() {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
           gap: "1.5rem",
-          maxWidth: "800px",
+          maxWidth: "900px",
           width: "100%",
         }}
       >
         <FeatureCard
           icon="🗺️"
           title="Préparer"
+          href="/preparer"
           description="Tracez votre itinéraire, ajoutez des points d'intérêt et estimez la durée de votre randonnée."
         />
         <FeatureCard
-          icon="🧭"
-          title="En route"
-          description="Navigation GPS en temps réel, enregistrement du tracé et alertes sur le parcours."
+          icon="🌤️"
+          title="Météo"
+          href="/meteo"
+          description="Consultez les prévisions météo détaillées pour votre destination et évaluez le risque rando."
         />
         <FeatureCard
-          icon="📊"
-          title="Analyser"
-          description="Consultez votre historique, visualisez vos profils altimétriques et suivez vos progrès."
+          icon="✅"
+          title="Check-list"
+          href="/checklist"
+          description="Préparez votre équipement avec une liste personnalisée selon la saison, l'altitude et la durée."
+        />
+        <FeatureCard
+          icon="🧭"
+          title="Carte"
+          href="/carte"
+          description="Explorez les cartes IGN détaillées et recherchez un lieu pour planifier votre sortie."
         />
       </section>
 
@@ -106,20 +115,27 @@ export default function HomePage() {
 function FeatureCard({
   icon,
   title,
+  href,
   description,
 }: {
   icon: string;
   title: string;
+  href: string;
   description: string;
 }) {
   return (
-    <div
+    <Link
+      href={href}
       style={{
         backgroundColor: "#FFFFFF",
         borderRadius: "12px",
         padding: "1.5rem",
         boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
         border: "1px solid #E5E7EB",
+        textDecoration: "none",
+        color: "inherit",
+        display: "block",
+        transition: "box-shadow 0.2s",
       }}
     >
       <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>{icon}</div>
@@ -129,6 +145,6 @@ function FeatureCard({
       <p style={{ fontSize: "0.9rem", color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
         {description}
       </p>
-    </div>
+    </Link>
   );
 }
