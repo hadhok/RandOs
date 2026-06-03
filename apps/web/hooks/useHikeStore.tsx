@@ -111,10 +111,11 @@ export function HikeStoreProvider({ children }: { children: ReactNode }) {
     setActiveHikeId(hike.id);
 
     if (supabase) {
-      supabase
-        .from("hikes")
-        .insert({ id: hike.id, name: hike.name, created_at: hike.createdAt, metadata: { waypoints: [] } })
-        .then(({ error }) => { if (error) console.warn("Supabase insert:", error.message); })
+      Promise.resolve(
+        supabase
+          .from("hikes")
+          .insert({ id: hike.id, name: hike.name, created_at: hike.createdAt, metadata: { waypoints: [] } })
+      ).then(({ error }) => { if (error) console.warn("Supabase insert:", error.message); })
         .catch(() => {});
     }
 
@@ -129,16 +130,15 @@ export function HikeStoreProvider({ children }: { children: ReactNode }) {
       const current = hikesRef.current.find((h) => h.id === id);
       const updated = current ? { ...current, ...patch } : null;
       if (updated) {
-        supabase
-          .from("hikes")
-          .upsert({
+        Promise.resolve(
+          supabase.from("hikes").upsert({
             id: updated.id,
             name: updated.name,
             created_at: updated.createdAt,
             metadata: { waypoints: updated.waypoints },
             updated_at: new Date().toISOString(),
           })
-          .then(({ error }) => { if (error) console.warn("Supabase upsert:", error.message); })
+        ).then(({ error }) => { if (error) console.warn("Supabase upsert:", error.message); })
           .catch(() => {});
       }
     }
@@ -153,11 +153,9 @@ export function HikeStoreProvider({ children }: { children: ReactNode }) {
     });
 
     if (supabase) {
-      supabase
-        .from("hikes")
-        .delete()
-        .eq("id", id)
-        .then(({ error }) => { if (error) console.warn("Supabase delete:", error.message); })
+      Promise.resolve(
+        supabase.from("hikes").delete().eq("id", id)
+      ).then(({ error }) => { if (error) console.warn("Supabase delete:", error.message); })
         .catch(() => {});
     }
   }, []);
