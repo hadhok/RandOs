@@ -109,19 +109,21 @@ export function HikeStoreProvider({ children }: { children: ReactNode }) {
       const updated = prev.map((h) => h.id === id ? { ...h, ...patch } : h);
       saveToStorage(updated);
 
-      // Persist to Supabase (silent fail)
+      // Persist to Supabase with upsert — handles the case where the initial
+      // insert failed (RLS, network) so the row may not exist yet.
       const hike = updated.find((h) => h.id === id);
-      if (hike) {
-        const supabasePatch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-        if (patch.name !== undefined) supabasePatch.name = patch.name;
-        if (patch.waypoints !== undefined) supabasePatch.metadata = { waypoints: patch.waypoints };
-        if (supabase) {
-          Promise.resolve(
-            supabase.from("hikes").update(supabasePatch).eq("id", id)
-          ).then(({ error }) => {
-            if (error) console.warn("Supabase update hike error:", error.message);
-          }).catch(() => {});
-        }
+      if (hike && supabase) {
+        Promise.resolve(
+          supabase.from("hikes").upsert({
+            id: hike.id,
+            name: hike.name,
+            created_at: hike.createdAt,
+            metadata: { waypoints: hike.waypoints },
+            updated_at: new Date().toISOString(),
+          })
+        ).then(({ error }) => {
+          if (error) console.warn("Supabase upsert hike error:", error.message);
+        }).catch(() => {});
       }
 
       return updated;
