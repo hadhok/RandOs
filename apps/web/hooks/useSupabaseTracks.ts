@@ -87,15 +87,16 @@ export async function saveTrack(track: ActiveTrack): Promise<void> {
   saveTracksToStorage(local);
 
   // Try Supabase
-  try {
-    const { error } = await supabase.from("tracks").upsert(row);
-    if (error) console.warn("Supabase saveTrack error:", error.message);
-  } catch {
-    // silent fail, localStorage already updated
+  if (supabase) {
+    try {
+      const { error } = await supabase.from("tracks").upsert(row);
+      if (error) console.warn("Supabase saveTrack error:", error.message);
+    } catch { /* silent fail */ }
   }
 }
 
 export async function listTracks(): Promise<Track[]> {
+  if (!supabase) return loadTracksFromStorage();
   try {
     const { data, error } = await supabase
       .from("tracks")
@@ -117,11 +118,10 @@ export async function deleteTrack(id: string): Promise<void> {
   const local = loadTracksFromStorage().filter((t) => t.id !== id);
   saveTracksToStorage(local);
 
-  // Try Supabase
-  try {
-    const { error } = await supabase.from("tracks").delete().eq("id", id);
-    if (error) console.warn("Supabase deleteTrack error:", error.message);
-  } catch {
-    // silent fail
+  if (supabase) {
+    try {
+      const { error } = await supabase.from("tracks").delete().eq("id", id);
+      if (error) console.warn("Supabase deleteTrack error:", error.message);
+    } catch { /* silent fail */ }
   }
 }

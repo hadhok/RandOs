@@ -33,6 +33,7 @@ function rowToHike(row: Record<string, unknown>): Hike {
 }
 
 async function supabaseFetch(): Promise<Hike[] | null> {
+  if (!supabase) return null;
   try {
     const { data, error } = await supabase
       .from("hikes")
@@ -90,13 +91,15 @@ export function HikeStoreProvider({ children }: { children: ReactNode }) {
     setActiveHikeId(hike.id);
 
     // Persist to Supabase (silent fail)
-    Promise.resolve(
-      supabase
-        .from("hikes")
-        .insert({ id: hike.id, name: hike.name, created_at: hike.createdAt, metadata: { waypoints: [] } })
-    ).then(({ error }) => {
-      if (error) console.warn("Supabase insert hike error:", error.message);
-    }).catch(() => {});
+    if (supabase) {
+      Promise.resolve(
+        supabase
+          .from("hikes")
+          .insert({ id: hike.id, name: hike.name, created_at: hike.createdAt, metadata: { waypoints: [] } })
+      ).then(({ error }) => {
+        if (error) console.warn("Supabase insert hike error:", error.message);
+      }).catch(() => {});
+    }
 
     return hike;
   }, []);
@@ -112,11 +115,13 @@ export function HikeStoreProvider({ children }: { children: ReactNode }) {
         const supabasePatch: Record<string, unknown> = { updated_at: new Date().toISOString() };
         if (patch.name !== undefined) supabasePatch.name = patch.name;
         if (patch.waypoints !== undefined) supabasePatch.metadata = { waypoints: patch.waypoints };
-        Promise.resolve(
-          supabase.from("hikes").update(supabasePatch).eq("id", id)
-        ).then(({ error }) => {
-          if (error) console.warn("Supabase update hike error:", error.message);
-        }).catch(() => {});
+        if (supabase) {
+          Promise.resolve(
+            supabase.from("hikes").update(supabasePatch).eq("id", id)
+          ).then(({ error }) => {
+            if (error) console.warn("Supabase update hike error:", error.message);
+          }).catch(() => {});
+        }
       }
 
       return updated;
@@ -130,11 +135,13 @@ export function HikeStoreProvider({ children }: { children: ReactNode }) {
       if (activeHikeId === id) setActiveHikeId(updated[0]?.id ?? null);
 
       // Delete from Supabase (silent fail)
-      Promise.resolve(
-        supabase.from("hikes").delete().eq("id", id)
-      ).then(({ error }) => {
-        if (error) console.warn("Supabase delete hike error:", error.message);
-      }).catch(() => {});
+      if (supabase) {
+        Promise.resolve(
+          supabase.from("hikes").delete().eq("id", id)
+        ).then(({ error }) => {
+          if (error) console.warn("Supabase delete hike error:", error.message);
+        }).catch(() => {});
+      }
 
       return updated;
     });
