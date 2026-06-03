@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import MapLibreGL from "@maplibre/maplibre-react-native";
+import type { CameraRef } from "@maplibre/maplibre-react-native";
 import * as Location from "expo-location";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system";
@@ -27,7 +28,7 @@ export default function EnRouteScreen() {
   const [currentPos, setCurrentPos] = useState<Coord | null>(null);
   const subscriptionRef = useRef<Location.LocationSubscription | null>(null);
   const startTimeRef = useRef<number>(0);
-  const cameraRef = useRef<MapLibreGL.Camera>(null);
+  const cameraRef = useRef<CameraRef>(null);
 
   const activeTrack =
     points.length > 0 ? buildActiveTrack(startTimeRef.current, points) : null;

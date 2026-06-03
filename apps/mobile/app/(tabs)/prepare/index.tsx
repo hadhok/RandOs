@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import MapLibreGL from "@maplibre/maplibre-react-native";
+import type { CameraRef } from "@maplibre/maplibre-react-native";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -45,7 +46,7 @@ export default function PrepareScreen() {
   const { hikes, activeHike, createHike, updateHike, deleteHike, setActiveHike } =
     useHikeStore();
   const { isOnline } = useNetworkStatus();
-  const cameraRef = useRef<MapLibreGL.Camera>(null);
+  const cameraRef = useRef<CameraRef>(null);
   const [panelExpanded, setPanelExpanded] = useState(false);
   const [showHikeList, setShowHikeList] = useState(false);
   const [importing, setImporting] = useState(false);
