@@ -13,8 +13,9 @@ import {
   assessHikeRisk,
   calculateStats,
   parseGPX,
+  computeStages,
 } from "@randos/core";
-import type { BoundingBox } from "@randos/core";
+import type { BoundingBox, HikerLevel } from "@randos/core";
 import { useHikeStore } from "../hooks/useHikeStore";
 import { useElevation } from "../hooks/useElevation";
 import ElevationProfile from "./ElevationProfile";
@@ -22,6 +23,8 @@ import POILayer from "./POILayer";
 import RiskBadge from "./RiskBadge";
 import GPXImporter from "./GPXImporter";
 import ExportButton from "./ExportButton";
+
+const STAGE_COLORS = ["#2D6A4F","#3B82F6","#F59E0B","#EF4444","#8B5CF6","#EC4899","#06B6D4","#84CC16"];
 
 function GPXImporterOverlay() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -64,8 +67,11 @@ export default function HikeEditor() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
+  const stageMarkersRef = useRef<maplibregl.Marker[]>([]);
   const ignFailedRef = useRef(false);
   const [mapReady, setMapReady] = useState(false);
+  const [showStages, setShowStages] = useState(false);
+  const [hikerLevel, setHikerLevel] = useState<HikerLevel>("intermediaire");
 
   const { hikes, activeHike, createHike, updateHike, deleteHike, setActiveHike } = useHikeStore();
 
@@ -147,6 +153,20 @@ export default function HikeEditor() {
         type: "line",
         source: "route",
         paint: { "line-color": "#2D6A4F", "line-width": 3 },
+      });
+      map.addSource("stages", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer({
+        id: "stages-line",
+        type: "line",
+        source: "stages",
+        paint: {
+          "line-color": ["get", "color"],
+          "line-width": 4,
+          "line-opacity": 0,
+        },
       });
       setMapReady(true);
     });
@@ -230,6 +250,69 @@ export default function HikeEditor() {
       }
     }
   }, [activeHike]);
+
+  // Affichage des étapes sur la carte
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+
+    stageMarkersRef.current.forEach((m) => m.remove());
+    stageMarkersRef.current = [];
+
+    const routeSource = map.getSource("route") as maplibregl.GeoJSONSource | undefined;
+    const stagesSource = map.getSource("stages") as maplibregl.GeoJSONSource | undefined;
+
+    if (!showStages || waypoints.length < 2) {
+      stagesSource?.setData({ type: "FeatureCollection", features: [] });
+      map.setPaintProperty("stages-line", "line-opacity", 0);
+      map.setPaintProperty("route-line", "line-opacity", 1);
+      return;
+    }
+
+    const stages = computeStages(
+      waypoints,
+      new Array(waypoints.length - 1).fill(0),
+      hikerLevel,
+    );
+
+    // Cacher la ligne de base, montrer les segments colorés
+    map.setPaintProperty("route-line", "line-opacity", 0);
+    map.setPaintProperty("stages-line", "line-opacity", 1);
+
+    const features = stages.map((stage) => ({
+      type: "Feature" as const,
+      geometry: {
+        type: "LineString" as const,
+        coordinates: waypoints
+          .slice(stage.startIndex, stage.endIndex + 1)
+          .map((wp) => [wp.lng, wp.lat]),
+      },
+      properties: { color: STAGE_COLORS[(stage.day - 1) % STAGE_COLORS.length] ?? "#2D6A4F", day: stage.day },
+    }));
+
+    stagesSource?.setData({ type: "FeatureCollection", features });
+
+    // Marqueurs J1, J2... aux points de transition
+    stages.forEach((stage) => {
+      const isLast = stage.day === stages.length;
+      const wpIndex = isLast ? stage.endIndex : stage.startIndex;
+      const wp = waypoints[wpIndex];
+      if (!wp) return;
+      const color = STAGE_COLORS[(stage.day - 1) % STAGE_COLORS.length] ?? "#2D6A4F";
+      const el = document.createElement("div");
+      el.style.cssText = `background:${color};color:#fff;font-size:10px;font-weight:700;padding:2px 5px;border-radius:10px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);white-space:nowrap;cursor:default`;
+      el.textContent = `J${stage.day}`;
+      stageMarkersRef.current.push(
+        new maplibregl.Marker({ element: el, anchor: "center" })
+          .setLngLat([wp.lng, wp.lat])
+          .addTo(map),
+      );
+      // Aussi ajouter le dernier point (arrivée)
+      if (!isLast) return;
+      void routeSource;
+    });
+
+  }, [showStages, hikerLevel, waypoints, mapReady]);
 
   const distance = activeHike
     ? calculatePathDistance(activeHike.waypoints.map((wp) => ({ lat: wp.lat, lon: wp.lng })))
@@ -382,6 +465,36 @@ export default function HikeEditor() {
                 <div style={{ fontWeight: 700, color: "#2D6A4F" }}>{activeHike.waypoints.length}</div>
               </div>
             </div>
+
+            {waypoints.length >= 2 && (
+              <div style={{ borderTop: "1px solid #F3F4F6", paddingTop: "0.75rem" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#6B7280" }}>Étapes sur la carte</span>
+                  <button onClick={() => setShowStages((v) => !v)} style={{
+                    padding: "0.2rem 0.6rem", fontSize: "0.7rem", fontWeight: 700,
+                    backgroundColor: showStages ? "#2D6A4F" : "#F3F4F6",
+                    color: showStages ? "#fff" : "#374151",
+                    border: "none", borderRadius: "12px", cursor: "pointer",
+                  }}>
+                    {showStages ? "Activé" : "Désactivé"}
+                  </button>
+                </div>
+                {showStages && (
+                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                    {(["debutant", "intermediaire", "expert"] as HikerLevel[]).map((l) => (
+                      <button key={l} onClick={() => setHikerLevel(l)} style={{
+                        flex: 1, padding: "0.25rem", fontSize: "0.65rem", fontWeight: hikerLevel === l ? 700 : 400,
+                        border: "1px solid", borderColor: hikerLevel === l ? "#2D6A4F" : "#E5E7EB",
+                        borderRadius: "6px", backgroundColor: hikerLevel === l ? "#2D6A4F" : "#fff",
+                        color: hikerLevel === l ? "#fff" : "#374151", cursor: "pointer",
+                      }}>
+                        {l === "debutant" ? "Déb." : l === "intermediaire" ? "Inter." : "Expert"}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {elevationData && elevationStats && waypoints.length >= 2 && (
               <ElevationProfile points={elevationData} stats={elevationStats} />
