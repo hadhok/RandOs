@@ -156,9 +156,9 @@ export default function HikeEditor() {
       const activeId = (map as maplibregl.Map & { _activeHikeId?: string })._activeHikeId;
       if (!activeId) return;
 
-      const marker = new maplibregl.Marker({ color: "#3B82F6" })
-        .setLngLat([lng, lat])
-        .addTo(map);
+      const el = document.createElement("div");
+      el.style.cssText = "width:8px;height:8px;background:#3B82F6;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.3)";
+      const marker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
       markersRef.current.push(marker);
 
       const currentWaypoints = (map as maplibregl.Map & { _waypoints?: Array<{ lat: number; lng: number }> })._waypoints ?? [];
@@ -194,12 +194,19 @@ export default function HikeEditor() {
     const wps = activeHike?.waypoints ?? [];
     (map as maplibregl.Map & { _waypoints?: Array<{ lat: number; lng: number }> })._waypoints = wps;
 
-    wps.forEach((wp) => {
-      const marker = new maplibregl.Marker({ color: "#3B82F6" })
-        .setLngLat([wp.lng, wp.lat])
-        .addTo(map);
-      markersRef.current.push(marker);
-    });
+    // Seulement départ (vert) et arrivée (rouge) — pas un marker par point
+    if (wps.length >= 1) {
+      const start = wps[0]!;
+      const startEl = document.createElement("div");
+      startEl.style.cssText = "width:12px;height:12px;background:#2D6A4F;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4)";
+      markersRef.current.push(new maplibregl.Marker({ element: startEl }).setLngLat([start.lng, start.lat]).addTo(map));
+    }
+    if (wps.length >= 2) {
+      const end = wps[wps.length - 1]!;
+      const endEl = document.createElement("div");
+      endEl.style.cssText = "width:12px;height:12px;background:#EF4444;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4)";
+      markersRef.current.push(new maplibregl.Marker({ element: endEl }).setLngLat([end.lng, end.lat]).addTo(map));
+    }
 
     if (map.isStyleLoaded()) {
       const source = map.getSource("route") as maplibregl.GeoJSONSource | undefined;
@@ -207,12 +214,16 @@ export default function HikeEditor() {
         if (wps.length >= 2) {
           source.setData({
             type: "Feature",
-            geometry: {
-              type: "LineString",
-              coordinates: wps.map((wp) => [wp.lng, wp.lat]),
-            },
+            geometry: { type: "LineString", coordinates: wps.map((wp) => [wp.lng, wp.lat]) },
             properties: {},
           });
+          // Zoom sur le tracé
+          const lngs = wps.map((w) => w.lng);
+          const lats = wps.map((w) => w.lat);
+          map.fitBounds(
+            [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+            { padding: 60, maxZoom: 14 }
+          );
         } else {
           source.setData({ type: "FeatureCollection", features: [] });
         }
