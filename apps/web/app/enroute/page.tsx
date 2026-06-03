@@ -7,7 +7,7 @@ const TrackingDashboard = dynamic(
 
 export default function EnRoutePage() {
   return (
-    <main style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+    <main style={{ height: "calc(100vh - 48px)", display: "flex", flexDirection: "column" }}>
       <div
         style={{
           padding: "0.75rem 1.5rem",

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
 
-const SOSButton = dynamic(() => import("../components/SOSButton"), { ssr: false });
+const NavBar = dynamic(() => import("../components/NavBar"), { ssr: false });
 
 export const metadata: Metadata = {
   title: "RandOs – Planifiez vos randonnées",
@@ -36,15 +36,15 @@ export default function RootLayout({
         style={{
           margin: 0,
           padding: 0,
-          height: "100vh",
+          minHeight: "100vh",
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           backgroundColor: "#F9FAFB",
           color: "#1F2937",
         }}
       >
+        <NavBar />
         {children}
-        <SOSButton />
       </body>
     </html>
   );

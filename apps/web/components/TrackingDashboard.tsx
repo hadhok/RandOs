@@ -257,7 +257,7 @@ export default function TrackingDashboard() {
   const stats = track ? computeTrackStats(track) : null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Map */}
       <div style={{ flex: 1, position: "relative" }}>
         <div ref={mapContainerRef} style={{ position: "absolute", inset: 0 }} />

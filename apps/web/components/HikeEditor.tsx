@@ -319,7 +319,7 @@ export default function HikeEditor() {
     : 0;
 
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "calc(100vh - 48px)", overflow: "hidden" }}>
       <div style={{ flex: 1, position: "relative" }}>
         <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
         {mapReady && <POILayer map={mapRef.current} bbox={bbox} />}
@@ -384,7 +384,7 @@ export default function HikeEditor() {
           </button>
           <button
             onClick={() => {
-              if (activeHike) updateHike(activeHike.id, {});
+              if (activeHike) updateHike(activeHike.id, { name: activeHike.name, waypoints: activeHike.waypoints });
             }}
             style={{
               flex: 1,

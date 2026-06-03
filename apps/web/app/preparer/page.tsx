@@ -12,7 +12,7 @@ export default function PreparerPage() {
   return (
     <HikeStoreProvider>
       <main style={{ width: "100%", overflow: "hidden" }}>
-        <div style={{ height: "100vh" }}>
+        <div style={{ height: "calc(100vh - 48px)" }}>
           <HikeEditor />
         </div>
         <section style={{ padding: "1.5rem", maxWidth: 800, margin: "0 auto" }}>

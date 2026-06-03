@@ -9,7 +9,7 @@ const MapView = dynamic(() => import("../../components/MapView"), {
 
 export default function CartePage() {
   return (
-    <main style={{ width: "100%", height: "100vh", overflow: "hidden" }}>
+    <main style={{ width: "100%", height: "calc(100vh - 48px)", overflow: "hidden" }}>
       <MapView />
     </main>
   );
