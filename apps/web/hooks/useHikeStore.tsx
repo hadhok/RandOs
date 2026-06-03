@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import type { ReactNode } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -19,7 +19,9 @@ function loadFromStorage(): Hike[] {
 
 function saveToStorage(hikes: Hike[]): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(hikes));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(hikes));
+  } catch { /* storage full */ }
 }
 
 function rowToHike(row: Record<string, unknown>): Hike {
@@ -62,94 +64,107 @@ export function HikeStoreProvider({ children }: { children: ReactNode }) {
   const [hikes, setHikes] = useState<Hike[]>([]);
   const [activeHikeId, setActiveHikeId] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
+  // Keep a ref to latest hikes for use inside callbacks without stale closures.
+  const hikesRef = useRef<Hike[]>([]);
+  hikesRef.current = hikes;
+
+  // Load from localStorage then sync with Supabase once on mount.
   useEffect(() => {
     const localHikes = loadFromStorage();
     if (localHikes.length > 0) {
       setHikes(localHikes);
       setActiveHikeId(localHikes[0]?.id ?? null);
     }
+    setLoaded(true);
 
+    if (!supabase) return;
     setSyncing(true);
-    supabaseFetch().then((remoteHikes) => {
-      setSyncing(false);
-      if (!remoteHikes) return; // fallback: keep localStorage data
-      const remoteIds = new Set(remoteHikes.map((h) => h.id));
-      const localOnly = loadFromStorage().filter((h) => !remoteIds.has(h.id));
-      const merged = [...remoteHikes, ...localOnly];
-      setHikes(merged);
-      saveToStorage(merged);
-      if (merged.length > 0) setActiveHikeId((prev) => prev ?? merged[0]?.id ?? null);
-    }).catch(() => setSyncing(false));
+    supabaseFetch()
+      .then((remoteHikes) => {
+        setSyncing(false);
+        if (!remoteHikes) return;
+        const remoteIds = new Set(remoteHikes.map((h) => h.id));
+        const localOnly = loadFromStorage().filter((h) => !remoteIds.has(h.id));
+        const merged = [...remoteHikes, ...localOnly];
+        setHikes(merged);
+        saveToStorage(merged);
+        setActiveHikeId((prev) => prev ?? merged[0]?.id ?? null);
+      })
+      .catch(() => setSyncing(false));
   }, []);
 
-  const activeHike = hikes.find((h) => h.id === activeHikeId) ?? null;
+  // Persist to localStorage whenever hikes change (after initial load).
+  useEffect(() => {
+    if (loaded) saveToStorage(hikes);
+  }, [hikes, loaded]);
 
   const createHike = useCallback((name: string): Hike => {
-    const hike: Hike = { id: crypto.randomUUID(), name, waypoints: [], createdAt: new Date().toISOString() };
-    setHikes((prev) => { const updated = [hike, ...prev]; saveToStorage(updated); return updated; });
+    const hike: Hike = {
+      id: crypto.randomUUID(),
+      name,
+      waypoints: [],
+      createdAt: new Date().toISOString(),
+    };
+    setHikes((prev) => [hike, ...prev]);
     setActiveHikeId(hike.id);
 
-    // Persist to Supabase (silent fail)
     if (supabase) {
-      Promise.resolve(
-        supabase
-          .from("hikes")
-          .insert({ id: hike.id, name: hike.name, created_at: hike.createdAt, metadata: { waypoints: [] } })
-      ).then(({ error }) => {
-        if (error) console.warn("Supabase insert hike error:", error.message);
-      }).catch(() => {});
+      supabase
+        .from("hikes")
+        .insert({ id: hike.id, name: hike.name, created_at: hike.createdAt, metadata: { waypoints: [] } })
+        .then(({ error }) => { if (error) console.warn("Supabase insert:", error.message); })
+        .catch(() => {});
     }
 
     return hike;
   }, []);
 
   const updateHike = useCallback((id: string, patch: Partial<Omit<Hike, "id" | "createdAt">>) => {
-    setHikes((prev) => {
-      const updated = prev.map((h) => h.id === id ? { ...h, ...patch } : h);
-      saveToStorage(updated);
+    setHikes((prev) => prev.map((h) => (h.id === id ? { ...h, ...patch } : h)));
 
-      // Persist to Supabase with upsert — handles the case where the initial
-      // insert failed (RLS, network) so the row may not exist yet.
-      const hike = updated.find((h) => h.id === id);
-      if (hike && supabase) {
-        Promise.resolve(
-          supabase.from("hikes").upsert({
-            id: hike.id,
-            name: hike.name,
-            created_at: hike.createdAt,
-            metadata: { waypoints: hike.waypoints },
+    if (supabase) {
+      // Use the ref to get the latest state without a stale closure.
+      const current = hikesRef.current.find((h) => h.id === id);
+      const updated = current ? { ...current, ...patch } : null;
+      if (updated) {
+        supabase
+          .from("hikes")
+          .upsert({
+            id: updated.id,
+            name: updated.name,
+            created_at: updated.createdAt,
+            metadata: { waypoints: updated.waypoints },
             updated_at: new Date().toISOString(),
           })
-        ).then(({ error }) => {
-          if (error) console.warn("Supabase upsert hike error:", error.message);
-        }).catch(() => {});
+          .then(({ error }) => { if (error) console.warn("Supabase upsert:", error.message); })
+          .catch(() => {});
       }
-
-      return updated;
-    });
+    }
   }, []);
 
   const deleteHike = useCallback((id: string) => {
-    setHikes((prev) => {
-      const updated = prev.filter((h) => h.id !== id);
-      saveToStorage(updated);
-      if (activeHikeId === id) setActiveHikeId(updated[0]?.id ?? null);
-
-      // Delete from Supabase (silent fail)
-      if (supabase) {
-        Promise.resolve(
-          supabase.from("hikes").delete().eq("id", id)
-        ).then(({ error }) => {
-          if (error) console.warn("Supabase delete hike error:", error.message);
-        }).catch(() => {});
-      }
-
-      return updated;
+    setHikes((prev) => prev.filter((h) => h.id !== id));
+    setActiveHikeId((curr) => {
+      if (curr !== id) return curr;
+      const remaining = hikesRef.current.filter((h) => h.id !== id);
+      return remaining[0]?.id ?? null;
     });
-  }, [activeHikeId]);
+
+    if (supabase) {
+      supabase
+        .from("hikes")
+        .delete()
+        .eq("id", id)
+        .then(({ error }) => { if (error) console.warn("Supabase delete:", error.message); })
+        .catch(() => {});
+    }
+  }, []);
 
   const setActiveHike = useCallback((id: string) => setActiveHikeId(id), []);
+
+  const activeHike = hikes.find((h) => h.id === activeHikeId) ?? null;
 
   return (
     <HikeContext.Provider value={{ hikes, activeHike, syncing, createHike, updateHike, deleteHike, setActiveHike }}>

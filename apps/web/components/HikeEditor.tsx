@@ -72,6 +72,7 @@ export default function HikeEditor() {
   const [mapReady, setMapReady] = useState(false);
   const [showStages, setShowStages] = useState(false);
   const [hikerLevel, setHikerLevel] = useState<HikerLevel>("intermediaire");
+  const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
 
   const { hikes, activeHike, createHike, updateHike, deleteHike, setActiveHike } = useHikeStore();
 
@@ -384,21 +385,31 @@ export default function HikeEditor() {
           </button>
           <button
             onClick={() => {
-              if (activeHike) updateHike(activeHike.id, { name: activeHike.name, waypoints: activeHike.waypoints });
+              if (!activeHike) return;
+              try {
+                updateHike(activeHike.id, { name: activeHike.name, waypoints: activeHike.waypoints });
+                setSaveState("saved");
+              } catch {
+                setSaveState("error");
+              } finally {
+                setTimeout(() => setSaveState("idle"), 2000);
+              }
             }}
             style={{
               flex: 1,
               padding: "0.5rem",
-              backgroundColor: "#1F2937",
+              backgroundColor: saveState === "saved" ? "#16A34A" : saveState === "error" ? "#DC2626" : "#1F2937",
               color: "#fff",
               border: "none",
               borderRadius: "6px",
-              cursor: "pointer",
+              cursor: activeHike ? "pointer" : "not-allowed",
               fontWeight: 600,
               fontSize: "0.8rem",
+              opacity: activeHike ? 1 : 0.5,
+              transition: "background-color 0.2s",
             }}
           >
-            Sauvegarder
+            {saveState === "saved" ? "Sauvegardé ✓" : saveState === "error" ? "Erreur ✗" : "Sauvegarder"}
           </button>
         </div>
         <div style={{ padding: "0 1rem 0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
